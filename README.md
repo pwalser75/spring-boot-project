@@ -11,7 +11,7 @@ Spring boot project with
 * **Access Log filter**, logging all requests (method, URI, response status and execution time)
 * **Performance Logging Aspect**, logging performance tree of nested service calls
 
-![](/home/piwi/idx-workspace/spring-boot-project/rest-api.png)
+![](rest-api.png)
 
 ### Setting up TLS
 
