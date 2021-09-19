@@ -11,6 +11,8 @@ Spring boot project with
 * **Access Log filter**, logging all requests (method, URI, response status and execution time)
 * **Performance Logging Aspect**, logging performance tree of nested service calls
 
+![](/home/piwi/idx-workspace/spring-boot-project/rest-api.png)
+
 ### Setting up TLS
 
 The application uses a **TLS server certificate** issued by a **test CA** (certificate authority). Clients need to trust
