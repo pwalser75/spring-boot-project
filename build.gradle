@@ -59,9 +59,7 @@ ext {
                     "com.h2database:h2:$h2Version"
             ],
             liquibase             : [
-                    dependencies.create("org.liquibase:liquibase-core:$liquibaseVersion") {
-                        exclude module: 'snakeyaml' // 1.18 clashes with 1.23 from spring boot 2.1.5
-                    }
+                    "org.liquibase:liquibase-core:$liquibaseVersion"
             ],
             jpaAnnotationProcessor: [
                     "org.hibernate:hibernate-jpamodelgen:$hibernateVersion"
