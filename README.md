@@ -13,29 +13,75 @@ Spring boot project with
 
 ![](rest-api.png)
 
-### Setting up TLS
+## Beginner's tour
 
-The application uses a **TLS server certificate** issued by a **test CA** (certificate authority). Clients need to trust
-this CA in order to connect. The test client already has a properly set up client truststore including this CA
-certificate.
+A quick tour over the building blocks of the application for beginners (if you're still learning Spring, JPA and REST):
 
-When connecting with other clients (browser, Postman, ...), you need to add this CA as **trusted root CA** (browser:
-certificates, add trusted root certificate). The CA certificate is located in the project root (`test_ca_001.cer`).
+### API
+
+Domain models and service definitions
+
+- `Note`: the domain object of Note with a text. This is a DTO (data transfer object), and will be used in local
+  services as well as REST services.
+- `NoteService`: the API of the service providing functions to create, update, load and delete notes.
+- `ResourceNotFoundException`: a custom exception thrown when a requested note does not exist.
+
+The API contains annotations for **Java Bean Validation** and serialization over **Jackson** (the DTOs will be
+serialized as JSON).
+
+### Persistence
+
+JPA persistence to store notes in a relational database
+
+- `BaseEntity`: an abstract base class for entities with an id, version and basic audit information (cretate and updated
+  timestamps). Entities are identified by their type and id, and the base class provides proper implementations of
+  the `equals`, `hashCode` and `toString` methods.
+- `NoteEntity`: the JPA entity for persisting the notes, maps to a database table and attributes to columns.
+- `NoteRepository`: a Spring Data JPA Repository providing CRUD (create, read, update, delete) operations. Can be
+  extended by adding additional methods to only find specific entities (using JPQL, the criteria API or using semantic
+  query method names).
+
+The database used here is a **H2** in-memory database, but could be replaced with another database in
+the `application.yaml`.
+
+**Liquibase** is used to create and incrementally build the database schema using the change sets defined
+in `src/main/resources/db/changelog`.
+
+### Service
+
+- `NotesServiceImpl`: implementation of the notes service.
+
+### Web
+
+- `NotesController`: exposes the notes service as a REST api.
+
+### Platform
+
+The platform contains auxiliary classes that augment spring with enhanced logging capabilities:
+
+- `PerformanceLoggingAspect`: logs the invocation tree and times for performance analysis. Realized using **AOP**(
+  Aspect-Oriented Programming).
+- `AccessLogFilter`: logs the REST API calls (method, path, duration, status). Realized as a **Servlet Filter**. The
+  access log is logged in a separate file: `logs/access.log`.
 
 ## Build
 
 ### Gradle
 
 To build this project with Gradle (default tasks: _clean build install_):
+
 ```bash
 ./gradlew
 ```
+
 ### Maven
 
 To build this project with Maven (default tasks: _clean install_):
+
 ```bash
 mvn
 ```
+
 ## Run
 
 ### Executable JAR
@@ -48,20 +94,34 @@ The Spring Boot application can be directly run as an executable jar, which you 
 ```bash
 java -jar spring-boot-project-1.0.0-SNAPSHOT.jar
 ```
+
 The task will remain in the `EXECUTING` state to keep the server alive, until it is terminated with _CTRL-C_.
 
 ### Gradle
 
 You can also run the application with Gradle:
+
 ```bash
 ./gradlew start
 ```
+
 ### Maven
 
 You can also run the application with Maven:
+
 ```bash
 mvn spring-boot:run
 ```
+
+### Setting up TLS
+
+The application uses a **TLS server certificate** issued by a **test CA** (certificate authority). Clients need to trust
+this CA in order to connect. The test client already has a properly set up client truststore including this CA
+certificate.
+
+When **connecting with other clients** (browser, Postman, ...), you need to add this CA as **trusted root CA** (browser:
+certificates, add trusted root certificate). The CA certificate is located in the project root (`test_ca_001.cer`).
+
 ## API Documentation (Swagger)
 
 API documentation reachable at [https://localhost:8443/swagger-ui/](https://localhost:8443/swagger-ui/)
