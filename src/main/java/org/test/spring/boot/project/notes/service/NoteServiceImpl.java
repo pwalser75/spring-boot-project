@@ -13,9 +13,10 @@ import org.test.spring.boot.project.notes.persistence.NoteRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.Spliterator;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Implementation of the NoteService.
@@ -50,7 +51,7 @@ public class NoteServiceImpl implements NoteService {
     public List<Note> list() {
         Spliterator<NoteEntity> spliterator = repository.findAll().spliterator();
         Stream<NoteEntity> stream = StreamSupport.stream(spliterator, false);
-        return stream.map(this::convert).collect(Collectors.toList());
+        return stream.map(this::convert).collect(toList());
     }
 
     @Override
@@ -76,7 +77,6 @@ public class NoteServiceImpl implements NoteService {
         if (dto == null) {
             return null;
         }
-        entity.setId(dto.getId());
         entity.setText(dto.getText());
         return entity;
     }

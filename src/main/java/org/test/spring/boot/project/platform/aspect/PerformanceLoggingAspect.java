@@ -93,20 +93,12 @@ public class PerformanceLoggingAspect {
             return context;
         }
 
-        public boolean isIntermediateInvocation() {
-            return invocationStack.size() > 0;
-        }
-
         public void enter(String invocation) {
             long time = System.nanoTime();
             InvocationInfo invocationInfo = new InvocationInfo(invocationStack.size(), invocation, time);
             invocations.add(invocationInfo);
             invocationStack.push(invocationInfo);
             nestedTime.push(new AtomicLong());
-        }
-
-        public void exit() {
-            exit(null);
         }
 
         public void exit(Throwable t) {
@@ -143,11 +135,11 @@ public class PerformanceLoggingAspect {
 
     private static class InvocationInfo {
 
-        private int mergeCount = 1;
         private final int level;
+        private final String invocation;
+        private int mergeCount = 1;
         private long startTimeNs;
         private long endTimeNs;
-        private final String invocation;
         private String result;
         private long nestedTimeNs;
 

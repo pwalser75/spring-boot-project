@@ -6,7 +6,12 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -21,9 +26,13 @@ import java.util.Optional;
 @Order(1)
 public class AccessLogFilter implements Filter {
 
-    private final static double NS_TO_MS_FACTOR = 1d / 1000000;
+    private final static double NS_TO_MS_FACTOR = 1e-6;
 
     private final static Logger logger = LoggerFactory.getLogger(AccessLogFilter.class);
+
+    private static String formatDuration(long durationNs) {
+        return BigDecimal.valueOf(durationNs * NS_TO_MS_FACTOR).setScale(2, RoundingMode.HALF_UP).toString();
+    }
 
     @Override
     public void init(FilterConfig filterConfig) {
@@ -55,10 +64,6 @@ public class AccessLogFilter implements Filter {
 
             logger.info("{} {} -> {} {}, {} ms", method, uri, responseStatusCode, responseStatus, formatDuration(durationNs));
         }
-    }
-
-    private static String formatDuration(long durationNs) {
-        return BigDecimal.valueOf(durationNs * NS_TO_MS_FACTOR).setScale(2, RoundingMode.HALF_UP).toString();
     }
 
 }

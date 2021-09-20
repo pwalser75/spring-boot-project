@@ -49,25 +49,26 @@ public final class ResponseExceptionMapper {
         }
         int status = response.getStatus();
         if (status >= 400) {
+            String message = response.readEntity(String.class);
             if (status == 400) {
-                throw new BadRequestException(response.readEntity(String.class));
+                throw new BadRequestException(message);
             }
             if (status == 401) {
-                throw new RuntimeException("Unauthorized: " + response.readEntity(String.class));
+                throw new RuntimeException("Unauthorized: " + message);
             }
             if (status == 403) {
-                throw new ForbiddenException(response.readEntity(String.class));
+                throw new ForbiddenException(message);
             }
             if (status == 404) {
-                throw new NotFoundException(response.readEntity(String.class));
+                throw new NotFoundException(message);
             }
             if (status == 405) {
-                throw new NotAllowedException(response.readEntity(String.class));
+                throw new NotAllowedException(message);
             }
             if (status == 500) {
-                throw new InternalServerErrorException(response.readEntity(String.class));
+                throw new InternalServerErrorException(message);
             }
-            throw new RuntimeException("Unexpected response: " + status + ", " + response.readEntity(String.class));
+            throw new RuntimeException("Unexpected response: " + status + ", " + message);
         }
     }
 }

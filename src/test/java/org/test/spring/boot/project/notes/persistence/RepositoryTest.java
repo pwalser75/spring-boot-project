@@ -27,10 +27,10 @@ public class RepositoryTest {
         NoteEntity note = new NoteEntity();
         note.setText("Aloha");
 
-        assertThat((Boolean) note.isPersistent()).isFalse();
+        assertThat(note.isPersistent()).isFalse();
         note = repository.save(note);
-        assertThat((Boolean) note.isPersistent()).isTrue();
-        assertThat((Object) note.getId()).isNotNull();
+        assertThat(note.isPersistent()).isTrue();
+        assertThat(note.getId()).isNotNull();
 
         // read
         note = repository.findById(note.getId()).orElseThrow(NoSuchElementException::new);

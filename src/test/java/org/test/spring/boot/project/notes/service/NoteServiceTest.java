@@ -13,9 +13,9 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Path;
 import java.util.List;
-import java.util.UUID;
 
 import static java.time.OffsetDateTime.now;
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -28,7 +28,7 @@ public class NoteServiceTest {
 
     @Test
     public void shouldSaveNote() {
-        String text = "Lorem ipsum dolor sit amet " + UUID.randomUUID();
+        String text = "Lorem ipsum dolor sit amet " + randomUUID();
         Note note = new Note();
         note.setText(text);
 
@@ -45,7 +45,7 @@ public class NoteServiceTest {
     @Test
     public void shouldFindNote() {
         Note note = new Note();
-        note.setText(UUID.randomUUID().toString());
+        note.setText(randomUUID().toString());
         Note saved = noteService.save(note);
 
         List<Note> allNotes = noteService.list();
@@ -55,7 +55,7 @@ public class NoteServiceTest {
     @Test
     public void shouldUpdateNote() {
         Note note = new Note();
-        note.setText(UUID.randomUUID().toString());
+        note.setText(randomUUID().toString());
         note = noteService.save(note);
 
         note.setText("Changed");
@@ -70,7 +70,7 @@ public class NoteServiceTest {
     @Test
     public void shouldDeleteNote() {
         Note note = new Note();
-        note.setText(UUID.randomUUID().toString());
+        note.setText(randomUUID().toString());
         note = noteService.save(note);
         Long id = note.getId();
         assertThat(noteService.list()).contains(note);

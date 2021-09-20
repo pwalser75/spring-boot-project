@@ -23,7 +23,6 @@ import org.test.spring.boot.project.platform.aspect.PerformanceLogging;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
@@ -73,11 +72,7 @@ public class NotesController {
             @ApiResponse(code = 404, message = "not found")
     })
     public Note get(@ApiParam(value = "ID of the note to fetch", required = true) @PathVariable("id") long id) {
-        Note result = noteService.get(id);
-        if (result != null) {
-            return result;
-        }
-        throw new NoSuchElementException();
+        return noteService.get(id);
     }
 
     /**

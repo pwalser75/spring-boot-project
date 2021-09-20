@@ -8,8 +8,13 @@ import jakarta.ws.rs.client.ClientBuilder;
 import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import org.test.spring.boot.project.platform.client.NoteClient;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Properties;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 import static org.glassfish.jersey.client.ClientProperties.CONNECT_TIMEOUT;
@@ -27,24 +32,47 @@ public final class RestClientConfig {
 
     }
 
+    /*
+    truststore=client-truststore.jks
+truststore-password: truststore
+connect-timeout-ms: 1000
+read-timeoutms: 5000
+     */
+
     public static ClientBuilder clientBuilder() {
 
-        try (InputStream in = NoteClient.class.getResourceAsStream("/client-truststore.jks")) {
-            KeyStore truststore = KeyStore.getInstance(KeyStore.getDefaultType());
-            truststore.load(in, "truststore".toCharArray());
+        try {
+
+            Properties clientProperties = loadClientProperties();
+            String truststorePath = Optional.ofNullable(clientProperties.getProperty("truststore"))
+                    .map(String::trim).filter(it -> it.length() > 0)
+                    .orElseThrow(() -> new NoSuchElementException("missing property 'truststore'"));
+            String truststorePassword = Optional.ofNullable(clientProperties.getProperty("truststore-password"))
+                    .map(String::trim).filter(it -> it.length() > 0)
+                    .orElseThrow(() -> new NoSuchElementException("missing property 'truststore-password'"));
+            int connectTimeout = Optional.ofNullable(clientProperties.getProperty("connect-timeout-ms"))
+                    .map(String::trim).map(Integer::parseInt)
+                    .orElse(1000);
+            int readTimeout = Optional.ofNullable(clientProperties.getProperty("read-timeout-ms"))
+                    .map(String::trim).map(Integer::parseInt)
+                    .orElse(5000);
+
+            if (!truststorePath.startsWith("/")) truststorePath = "/" + truststorePath;
+            KeyStore truststore = loadTruststore(truststorePath, truststorePassword);
 
             JacksonJaxbJsonProvider jsonProvider = new JacksonJaxbJsonProvider();
             jsonProvider.setMapper(objectMapper());
 
             return ClientBuilder.newBuilder()
                     .trustStore(truststore)
-                    .property(CONNECT_TIMEOUT, 1000)
-                    .property(READ_TIMEOUT, 5000)
+                    .property(CONNECT_TIMEOUT, connectTimeout)
+                    .property(READ_TIMEOUT, readTimeout)
                     .property(LOGGING_FEATURE_VERBOSITY_CLIENT, PAYLOAD_ANY)
                     .property(LOGGING_FEATURE_LOGGER_LEVEL_CLIENT, "WARNING")
                     .register(jsonProvider);
+
         } catch (Exception ex) {
-            throw new RuntimeException("Unable to load client truststore", ex);
+            throw new RuntimeException("Unable to load client truststore due to " + ex.getClass().getSimpleName() + ": " + ex.getMessage(), ex);
         }
     }
 
@@ -55,5 +83,21 @@ public final class RestClientConfig {
         mapper.setDateFormat(new StdDateFormat());
         mapper.disable(WRITE_DATES_AS_TIMESTAMPS);
         return mapper;
+    }
+
+    private static Properties loadClientProperties() throws IOException {
+        Properties properties = new Properties();
+        try (InputStream in = RestClientConfig.class.getResourceAsStream("/client.properties")) {
+            properties.load(in);
+        }
+        return properties;
+    }
+
+    private static KeyStore loadTruststore(String resourceName, String password) throws IOException, GeneralSecurityException {
+        try (InputStream in = NoteClient.class.getResourceAsStream(resourceName)) {
+            KeyStore truststore = KeyStore.getInstance(KeyStore.getDefaultType());
+            truststore.load(in, password.toCharArray());
+            return truststore;
+        }
     }
 }

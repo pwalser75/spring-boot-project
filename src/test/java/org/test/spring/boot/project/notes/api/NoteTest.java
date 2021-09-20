@@ -5,13 +5,14 @@ import org.junit.jupiter.api.Test;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Path;
-import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import java.util.Locale;
 import java.util.Set;
 
 import static java.time.OffsetDateTime.now;
+import static java.util.Locale.ENGLISH;
+import static javax.validation.Validation.buildDefaultValidatorFactory;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.test.spring.boot.project.platform.util.ObjectMappers.json;
 
@@ -22,7 +23,7 @@ public class NoteTest {
 
     @BeforeEach
     public void init() {
-        Locale.setDefault(Locale.ENGLISH);
+        Locale.setDefault(ENGLISH);
     }
 
     @Test
@@ -80,10 +81,10 @@ public class NoteTest {
 
     private void validate(Object obj, String... expectedErrorPropertyPaths) {
 
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        ValidatorFactory factory = buildDefaultValidatorFactory();
         Validator validator = factory.getValidator();
         Set<ConstraintViolation<Object>> errors = validator.validate(obj);
-        errors.forEach(e -> System.out.println("- " + e.getPropertyPath() + ": " + e.getMessage()));
+        errors.forEach(e -> System.out.printf("- %s: %s\n", e.getPropertyPath(), e.getMessage()));
         assertThat(errors).extracting(ConstraintViolation::getPropertyPath).map(Path::toString).containsExactlyInAnyOrder(expectedErrorPropertyPaths);
     }
 }

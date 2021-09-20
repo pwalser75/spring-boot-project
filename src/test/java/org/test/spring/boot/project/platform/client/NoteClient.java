@@ -7,10 +7,11 @@ import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.Response;
 import org.test.spring.boot.project.notes.api.Note;
-import org.test.spring.boot.project.platform.config.ResponseExceptionMapper;
 import org.test.spring.boot.project.platform.config.RestClientConfig;
 
 import java.util.List;
+
+import static org.test.spring.boot.project.platform.config.ResponseExceptionMapper.check;
 
 /**
  * Note client API
@@ -41,7 +42,7 @@ public class NoteClient implements AutoCloseable {
                 .request()
                 .buildGet();
 
-        Response response = ResponseExceptionMapper.check(invocation.invoke(), 200);
+        Response response = check(invocation.invoke(), 200);
         return response.readEntity(new GenericType<>() {
         });
     }
@@ -58,7 +59,7 @@ public class NoteClient implements AutoCloseable {
                 .request()
                 .buildGet();
 
-        Response response = ResponseExceptionMapper.check(invocation.invoke(), 200);
+        Response response = check(invocation.invoke(), 200);
         return response.readEntity(Note.class);
     }
 
@@ -74,7 +75,7 @@ public class NoteClient implements AutoCloseable {
                 .request()
                 .buildPost(Entity.json(note));
 
-        Response response = ResponseExceptionMapper.check(invocation.invoke(), 201);
+        Response response = check(invocation.invoke(), 201);
         return response.readEntity(Note.class);
     }
 
@@ -94,7 +95,7 @@ public class NoteClient implements AutoCloseable {
                 .request()
                 .buildPut(Entity.json(note));
 
-        ResponseExceptionMapper.check(invocation.invoke(), 204);
+        check(invocation.invoke(), 204);
     }
 
     /**
@@ -109,7 +110,7 @@ public class NoteClient implements AutoCloseable {
                 .request()
                 .buildDelete();
 
-        ResponseExceptionMapper.check(invocation.invoke(), 204);
+        check(invocation.invoke(), 204);
     }
 
 }
