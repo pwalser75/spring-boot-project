@@ -27,15 +27,15 @@ certificates, add trusted root certificate). The CA certificate is located in th
 ### Gradle
 
 To build this project with Gradle (default tasks: _clean build install_):
-
-    ./gradlew
-
+```bash
+./gradlew
+```
 ### Maven
 
 To build this project with Maven (default tasks: _clean install_):
-
-    mvn
-
+```bash
+mvn
+```
 ## Run
 
 ### Executable JAR
@@ -45,23 +45,23 @@ The Spring Boot application can be directly run as an executable jar, which you 
 - when built with Gradle: `build/libs`
 - when built with Maven: `target`
 
-
-    java -jar spring-boot-project-1.0.0-SNAPSHOT.jar
-
+```bash
+java -jar spring-boot-project-1.0.0-SNAPSHOT.jar
+```
 The task will remain in the `EXECUTING` state to keep the server alive, until it is terminated with _CTRL-C_.
 
 ### Gradle
 
 You can also run the application with Gradle:
-
-    ./gradlew start
-
+```bash
+./gradlew start
+```
 ### Maven
 
 You can also run the application with Maven:
-
-    mvn spring-boot:run
-
+```bash
+mvn spring-boot:run
+```
 ## API Documentation (Swagger)
 
 API documentation reachable at [https://localhost:8443/swagger-ui/](https://localhost:8443/swagger-ui/)
