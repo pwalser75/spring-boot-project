@@ -6,8 +6,8 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.Response;
-import org.test.spring.boot.project.notes.api.Note;
 import org.test.spring.boot.project.RestClientConfig;
+import org.test.spring.boot.project.notes.api.Note;
 
 import java.util.List;
 
