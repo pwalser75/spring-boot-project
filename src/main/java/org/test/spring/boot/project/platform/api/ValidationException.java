@@ -1,6 +1,5 @@
-package org.test.spring.boot.project.platform.error;
+package org.test.spring.boot.project.platform.api;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 
@@ -9,27 +8,39 @@ import javax.validation.ConstraintViolationException;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Validation errors.
- */
-public class ValidationErrors {
+import static java.util.stream.Collectors.joining;
 
-    @JsonProperty("errors")
+/**
+ * Validation exception.
+ */
+public class ValidationException extends RuntimeException {
+
     private final List<ValidationError> errors = new LinkedList<>();
 
-    public ValidationErrors(ConstraintViolationException ex) {
+    public ValidationException(ConstraintViolationException ex) {
         for (ConstraintViolation<?> error : ex.getConstraintViolations()) {
             errors.add(new ValidationError(error));
         }
     }
 
-    public ValidationErrors(BindingResult bindingResult) {
+    public ValidationException(BindingResult bindingResult) {
         for (ObjectError error : bindingResult.getAllErrors()) {
             errors.add(new ValidationError(error));
         }
     }
 
+    public ValidationException(List<ValidationError> validationErrors) {
+        for (ValidationError error : validationErrors) {
+            errors.add(error);
+        }
+    }
+
     public List<ValidationError> getErrors() {
         return errors;
+    }
+
+    @Override
+    public String getMessage() {
+        return errors.stream().map(ValidationError::toString).collect(joining(", "));
     }
 }

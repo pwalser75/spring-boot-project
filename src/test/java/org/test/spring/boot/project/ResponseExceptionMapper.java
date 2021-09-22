@@ -1,5 +1,7 @@
-package org.test.spring.boot.project.platform.config;
+package org.test.spring.boot.project;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
@@ -7,6 +9,12 @@ import jakarta.ws.rs.NotAllowedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
+import org.test.spring.boot.project.platform.api.ValidationError;
+import org.test.spring.boot.project.platform.api.ValidationException;
+
+import java.util.List;
+
+import static org.test.spring.boot.project.platform.util.ObjectMappers.json;
 
 /**
  * Exception mapper which maps the HTTP error status codes (4xx, 5xx) to appropriate exceptions.
@@ -51,7 +59,14 @@ public final class ResponseExceptionMapper {
         if (status >= 400) {
             String message = response.readEntity(String.class);
             if (status == 400) {
-                throw new BadRequestException(message);
+                try {
+                    // check if the response is a validation exception
+                    List<ValidationError> validationErrors = json().readValue(message, new TypeReference<>() {
+                    });
+                    throw !validationErrors.isEmpty() ? new ValidationException(validationErrors) : new BadRequestException(message);
+                } catch (JsonProcessingException e) {
+                    throw new BadRequestException(message);
+                }
             }
             if (status == 401) {
                 throw new RuntimeException("Unauthorized: " + message);

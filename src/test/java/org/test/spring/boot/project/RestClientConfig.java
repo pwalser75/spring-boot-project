@@ -1,4 +1,4 @@
-package org.test.spring.boot.project.platform.config;
+package org.test.spring.boot.project;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.ws.rs.client.ClientBuilder;
 import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
-import org.test.spring.boot.project.platform.client.NoteClient;
+import org.test.spring.boot.project.notes.client.NoteClient;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,13 +31,6 @@ public final class RestClientConfig {
     private RestClientConfig() {
 
     }
-
-    /*
-    truststore=client-truststore.jks
-truststore-password: truststore
-connect-timeout-ms: 1000
-read-timeoutms: 5000
-     */
 
     public static ClientBuilder clientBuilder() {
 

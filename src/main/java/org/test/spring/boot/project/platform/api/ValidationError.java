@@ -1,4 +1,4 @@
-package org.test.spring.boot.project.platform.error;
+package org.test.spring.boot.project.platform.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.validation.FieldError;
@@ -22,6 +22,12 @@ public class ValidationError {
 
     @JsonProperty("message")
     private final String message;
+
+    public ValidationError(@JsonProperty("path") String path, @JsonProperty("code") String errorCode, @JsonProperty("message") String message) {
+        this.path = path;
+        this.errorCode = errorCode;
+        this.message = message;
+    }
 
     public ValidationError(ObjectError objectError) {
 
@@ -51,5 +57,10 @@ public class ValidationError {
 
     public String getMessage() {
         return message;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s: %s (%s)", path, message, errorCode);
     }
 }

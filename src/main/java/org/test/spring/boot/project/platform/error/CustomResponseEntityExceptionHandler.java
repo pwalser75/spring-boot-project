@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.test.spring.boot.project.platform.api.ValidationException;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
@@ -21,7 +22,7 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
                                                                   HttpHeaders headers, HttpStatus status, WebRequest request) {
-        ValidationErrors errors = new ValidationErrors(ex.getBindingResult());
-        return handleExceptionInternal(ex, errors.getErrors(), headers, BAD_REQUEST, request);
+        ValidationException validationException = new ValidationException(ex.getBindingResult());
+        return handleExceptionInternal(ex, validationException.getErrors(), headers, BAD_REQUEST, request);
     }
 }

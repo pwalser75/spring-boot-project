@@ -1,4 +1,4 @@
-package org.test.spring.boot.project.platform.client;
+package org.test.spring.boot.project.notes.client;
 
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.client.Client;
@@ -7,11 +7,11 @@ import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.Response;
 import org.test.spring.boot.project.notes.api.Note;
-import org.test.spring.boot.project.platform.config.RestClientConfig;
+import org.test.spring.boot.project.RestClientConfig;
 
 import java.util.List;
 
-import static org.test.spring.boot.project.platform.config.ResponseExceptionMapper.check;
+import static org.test.spring.boot.project.ResponseExceptionMapper.check;
 
 /**
  * Note client API
