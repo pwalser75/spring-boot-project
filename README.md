@@ -59,10 +59,35 @@ in `src/main/resources/db/changelog`.
 
 The platform contains auxiliary classes that augment spring with enhanced logging capabilities:
 
-- `PerformanceLoggingAspect`: logs the invocation tree and times for performance analysis. Realized using **AOP**(
-  Aspect-Oriented Programming).
 - `AccessLogFilter`: logs the REST API calls (method, path, duration, status). Realized as a **Servlet Filter**. The
   access log is logged in a separate file: `logs/access.log`.
+- `PerformanceLoggingAspect`: logs the invocation tree and times for performance analysis. Realized using **AOP**(
+  Aspect-Oriented Programming).
+
+Access log output:
+
+```text
+2021-09-21 21:34:48.977 - POST /api/notes -> 201 CREATED, 40.80 ms
+2021-09-21 21:34:48.991 - GET /api/notes/1101 -> 200 OK, 4.09 ms
+2021-09-21 21:34:48.999 - GET /api/notes -> 200 OK, 5.70 ms
+2021-09-21 21:34:49.007 - PUT /api/notes/1101 -> 204 NO_CONTENT, 3.62 ms
+2021-09-21 21:34:49.012 - GET /api/notes/1101 -> 200 OK, 2.41 ms
+2021-09-21 21:34:49.018 - DELETE /api/notes/1101 -> 204 NO_CONTENT, 4.15 ms
+2021-09-21 21:34:49.020 - DELETE /api/notes/1101 -> 204 NO_CONTENT, 1.25 ms
+2021-09-21 21:34:49.025 - GET /api/notes -> 200 OK, 2.73 ms
+2021-09-21 21:34:49.030 - GET /api/notes/1101 -> 404 NOT_FOUND, 3.53 ms
+2021-09-21 21:34:49.080 - POST /api/notes -> 400 BAD_REQUEST, 8.51 ms
+2021-09-21 21:34:49.125 - POST /api/notes -> 400 BAD_REQUEST, 3.01 ms
+```
+
+Performance logging output:
+
+```text
+NotesController.update(..) -> 2.13 ms, self: 0.91 ms
+  + NoteServiceImpl.save(..) -> 1.22 ms, self: 0.30 ms
+    + CrudRepository.findById(..) -> 0.77 ms
+    + CrudRepository.save(..) -> 0.15 ms
+```
 
 ## Build
 

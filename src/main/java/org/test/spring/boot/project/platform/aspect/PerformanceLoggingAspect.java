@@ -14,6 +14,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -29,54 +30,98 @@ import java.util.stream.Collectors;
  * </ul>
  * Example log output:
  * <pre><code>
- * 15:12:22.316 INFO  [main] | PerformanceLoggingAspect - Test.a() &rarr; 211.20 ms, self: 51.30 ms
- * &nbsp;&nbsp;&lfloor; Test.b() &rarr; java.lang.IllegalArgumentException, 134.04 ms, self: 102.04 ms
- * &nbsp;&nbsp;&nbsp;&nbsp;&lfloor; 5x Test.c() &rarr; 51.94 ms
- * &nbsp;&nbsp;&nbsp;&nbsp;&lfloor; Test.d() &rarr; java.lang.ArithmeticException, 0.03 ms
- * &nbsp;&nbsp;&lfloor; Test.e() &rarr; 25.86 ms
- * 15:12:22.339 INFO  [main] | PerformanceLoggingAspect - Other.x() &rarr; 12.55 ms, self: 2.57 ms
- * &nbsp;&nbsp;&lfloor; Other.y() &rarr; 9.98 ms, self: 7.92 ms
- * &nbsp;&nbsp;&nbsp;&nbsp;&lfloor; Other.z() &rarr; 2.06 ms
+ * 15:12:22.316 INFO  [main] | PerformanceLoggingAspect - Test.a() -&gt; 211.20 ms, self: 51.30 ms
+ * &nbsp;&nbsp;+ Test.b() -&gt; java.lang.IllegalArgumentException, 134.04 ms, self: 102.04 ms
+ * &nbsp;&nbsp;&nbsp;&nbsp;+ 5x Test.c() -&gt; 51.94 ms
+ * &nbsp;&nbsp;&nbsp;&nbsp;+ Test.d() -&gt; java.lang.ArithmeticException, 0.03 ms
+ * &nbsp;&nbsp;+ Test.e() -&gt; 25.86 ms
+ * 15:12:22.339 INFO  [main] | PerformanceLoggingAspect - Other.x() -&gt; 12.55 ms, self: 2.57 ms
+ * &nbsp;&nbsp;+ Other.y() -&gt; 9.98 ms, self: 7.92 ms
+ * &nbsp;&nbsp;&nbsp;&nbsp;+ Other.z() -&gt; 2.06 ms
  * </code></pre>
+ *
+ * @author pwalser
+ * @since 2018-11-02
  */
 @Aspect
 @Component
 @Profile("performance-logging")
 public class PerformanceLoggingAspect {
 
-    private static final Logger log = LoggerFactory.getLogger(PerformanceLoggingAspect.class);
-
+    private final static String SYMBOL_SPACE = " ";
     private final static String SYMBOL_INDENTATION = "+"; // unicode alternative: "\u2937"
     private final static String SYMBOL_RIGHT_ARROW = "->"; // unicode alternative: "\u2192"
+
+    private static final Logger log = LoggerFactory.getLogger(PerformanceLoggingAspect.class);
+
+    /**
+     * Threshold (in nanoseconds) under which calls are no longer reported in detail.
+     */
+    private static final long DETAIL_THRESHOLD_NS = 1_000_000; // 1 ms
 
     /**
      * Bind aspect to any Spring @Service, @Controller, @RestController and Repository
      *
      * @param joinPoint aspect join point
      * @return invocation result
-     * @throws Throwable invocation exception
      */
-    @Around("@within(org.test.spring.boot.project.platform.aspect.PerformanceLogging) " +
-            "|| @within(org.springframework.stereotype.Service) " +
-            "|| @within(org.springframework.stereotype.Controller) " +
-            "|| @within(org.springframework.web.bind.annotation.RestController) " +
-            "|| this(org.springframework.data.repository.Repository)")
-    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-
+    @Around("(@within(org.test.spring.boot.project.platform.aspect.PerformanceLogging)" +
+            "|| @within(org.springframework.scheduling.annotation.Scheduled)" +
+            "|| @within(org.springframework.web.bind.annotation.RestController))"
+    )
+    public static Object around(ProceedingJoinPoint joinPoint) {
         String invocation = joinPoint.getSignature().toShortString();
-        PerformanceLoggingContext.current().enter(invocation);
-
-        Throwable error = null;
-        try {
-            return joinPoint.proceed();
-        } catch (Throwable t) {
-            throw error = t;
-        } finally {
-            PerformanceLoggingContext.current().exit(error);
-        }
+        return PerformanceLoggingContext.current().execute(invocation, (CheckedSupplier<Object>) joinPoint::proceed);
     }
 
-    static class PerformanceLoggingContext {
+    /**
+     * Bind aspect to intermediate invocations. Only log such invocations if we passed an entry point already.
+     *
+     * @param joinPoint aspect join point
+     * @return invocation result
+     * @throws Throwable invocation exception
+     */
+    @Around("@within(org.springframework.stereotype.Service)" +
+            "|| this(org.springframework.data.repository.Repository)" +
+            "|| @within(org.springframework.stereotype.Component)")
+    public static Object aroundIntermediate(ProceedingJoinPoint joinPoint) throws Throwable {
+        if (PerformanceLoggingContext.current().isIntermediateInvocation()) {
+            return around(joinPoint);
+        }
+        return joinPoint.proceed();
+    }
+
+    /**
+     * Functional interface for a runnable which can throw a checked exception.
+     */
+    @FunctionalInterface
+    public interface CheckedRunnable {
+
+        /**
+         * Functional contract
+         *
+         * @throws Exception optional exception
+         */
+        void run() throws Throwable;
+    }
+
+
+    /**
+     * Functional interface for a supplier which can throw a checked exception. (same as {@link Callable}).
+     */
+    @FunctionalInterface
+    public interface CheckedSupplier<T> {
+
+        /**
+         * Functional contract
+         *
+         * @return return value
+         * @throws Exception optional exception
+         */
+        T supply() throws Throwable;
+    }
+
+    public static class PerformanceLoggingContext {
 
         private final static ThreadLocal<PerformanceLoggingContext> current = new ThreadLocal<>();
 
@@ -93,7 +138,11 @@ public class PerformanceLoggingAspect {
             return context;
         }
 
-        public void enter(String invocation) {
+        boolean isIntermediateInvocation() {
+            return invocationStack.size() > 0;
+        }
+
+        private void enter(String invocation) {
             long time = System.nanoTime();
             InvocationInfo invocationInfo = new InvocationInfo(invocationStack.size(), invocation, time);
             invocations.add(invocationInfo);
@@ -101,7 +150,7 @@ public class PerformanceLoggingAspect {
             nestedTime.push(new AtomicLong());
         }
 
-        public void exit(Throwable t) {
+        private void exit(Throwable t) {
             long time = System.nanoTime();
             if (invocationStack.isEmpty()) {
                 throw new IllegalStateException("No invocation in progress");
@@ -125,10 +174,74 @@ public class PerformanceLoggingAspect {
                         previous = invocationInfo;
                     }
                 }
+                iterator = invocations.iterator();
+                InvocationInfo skipFromLevel = null;
+                while (iterator.hasNext()) {
+                    InvocationInfo invocationInfo = iterator.next();
+                    if (skipFromLevel != null) {
+                        if (invocationInfo.level > skipFromLevel.level) {
+                            iterator.remove();
+                        } else {
+                            skipFromLevel = null;
+                        }
+                    }
+                    if (skipFromLevel == null && invocationInfo.getElapsedTimeNs() < PerformanceLoggingAspect.DETAIL_THRESHOLD_NS && invocationInfo.level > 1) {
+                        skipFromLevel = invocationInfo;
+                    }
+                }
 
-                log.info(invocations.stream().map(InvocationInfo::toString).collect(Collectors.joining("\n")));
+                PerformanceLoggingAspect.log.info(invocations.stream()
+                        .map(InvocationInfo::toString)
+                        .collect(Collectors.joining("\n")));
                 invocations.clear();
                 current.remove();
+            }
+        }
+
+
+        /**
+         * Run code inside the performance logging context
+         *
+         * @param invocationInfo invocationInfo
+         * @param runnable       runnable to execute, required
+         */
+        public void execute(String invocationInfo, CheckedRunnable runnable) {
+            enter(invocationInfo);
+
+            Throwable error = null;
+            try {
+                runnable.run();
+            } catch (RuntimeException ex) {
+                error = ex;
+                throw ex;
+            } catch (Throwable ex) {
+                error = ex;
+                throw ex instanceof RuntimeException ? (RuntimeException) ex : new RuntimeException(ex);
+            } finally {
+                exit(error);
+            }
+        }
+
+        /**
+         * Run code inside the performance logging context
+         *
+         * @param invocationInfo invocationInfo
+         * @param supplier       supplier to execute, required
+         */
+        public <T> T execute(String invocationInfo, CheckedSupplier<T> supplier) {
+            enter(invocationInfo);
+
+            Throwable error = null;
+            try {
+                return supplier.supply();
+            } catch (RuntimeException ex) {
+                error = ex;
+                throw ex;
+            } catch (Throwable ex) {
+                error = ex;
+                throw ex instanceof RuntimeException ? (RuntimeException) ex : new RuntimeException(ex);
+            } finally {
+                exit(error);
             }
         }
     }
@@ -147,6 +260,10 @@ public class PerformanceLoggingAspect {
             this.level = level;
             this.startTimeNs = startTimeNs;
             this.invocation = invocation;
+        }
+
+        private static String formatTimeMs(long timeNs) {
+            return BigDecimal.valueOf(timeNs * 0.000001).setScale(2, RoundingMode.HALF_EVEN) + " ms";
         }
 
         void done(long endTimeNs, String result) {
@@ -181,16 +298,16 @@ public class PerformanceLoggingAspect {
             if (level > 0) {
                 builder.append("  ".repeat(level));
                 builder.append(SYMBOL_INDENTATION);
-                builder.append(" ");
+                builder.append(SYMBOL_SPACE);
             }
             if (mergeCount > 1) {
                 builder.append(mergeCount);
                 builder.append("x ");
             }
             builder.append(invocation);
-            builder.append(" ");
+            builder.append(SYMBOL_SPACE);
             builder.append(SYMBOL_RIGHT_ARROW);
-            builder.append(" ");
+            builder.append(SYMBOL_SPACE);
             if (result != null) {
                 builder.append(result);
                 builder.append(", ");
@@ -201,10 +318,6 @@ public class PerformanceLoggingAspect {
                 builder.append(formatTimeMs(durationNs - nestedTimeNs));
             }
             return builder.toString();
-        }
-
-        private String formatTimeMs(long timeNs) {
-            return BigDecimal.valueOf(timeNs * 0.000001).setScale(2, RoundingMode.HALF_EVEN) + " ms";
         }
     }
 }
