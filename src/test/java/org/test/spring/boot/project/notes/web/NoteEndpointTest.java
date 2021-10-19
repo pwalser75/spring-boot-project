@@ -81,13 +81,7 @@ public class NoteEndpointTest {
 
             // must not be found afterwards
             assertThat((Boolean) noteClient.list().stream().anyMatch(p -> p.getId() == id)).isFalse();
-
-            try {
-                noteClient.get(id);
-                org.junit.jupiter.api.Assertions.fail("Expected: NotFoundException");
-            } catch (NotFoundException expected) {
-                //
-            }
+            assertThatThrownBy(() -> noteClient.get(id)).isInstanceOf(NotFoundException.class);
         }
     }
 
@@ -95,13 +89,12 @@ public class NoteEndpointTest {
     public void testValidationMissingText() {
         try (final NoteClient noteClient = new NoteClient(baseUrl)) {
             Note note = new Note();
-            assertThatThrownBy(() -> noteClient.create(note)).isInstanceOfSatisfying(ValidationException.class, ex -> {
-                assertThat(ex.getErrors()).hasSize(1).anySatisfy(validationError -> {
-                    assertThat(validationError.getPath()).isEqualTo("note:text");
-                    assertThat(validationError.getErrorCode()).isEqualTo("NotBlank");
-                    assertThat(validationError.getMessage()).isEqualTo("must not be blank");
-                });
-            });
+            assertThatThrownBy(() -> noteClient.create(note)).isInstanceOfSatisfying(ValidationException.class, ex ->
+                    assertThat(ex.getErrors()).hasSize(1).anySatisfy(validationError -> {
+                        assertThat(validationError.getPath()).isEqualTo("note:text");
+                        assertThat(validationError.getErrorCode()).isEqualTo("NotBlank");
+                        assertThat(validationError.getMessage()).isEqualTo("must not be blank");
+                    }));
         }
     }
 
@@ -110,13 +103,12 @@ public class NoteEndpointTest {
         try (final NoteClient noteClient = new NoteClient(baseUrl)) {
             Note note = new Note();
             note.setText("Lorem ipsum".repeat(1000));
-            assertThatThrownBy(() -> noteClient.create(note)).isInstanceOfSatisfying(ValidationException.class, ex -> {
-                assertThat(ex.getErrors()).hasSize(1).anySatisfy(validationError -> {
-                    assertThat(validationError.getPath()).isEqualTo("note:text");
-                    assertThat(validationError.getErrorCode()).isEqualTo("Size");
-                    assertThat(validationError.getMessage()).isEqualTo("size must be between 1 and 2048");
-                });
-            });
+            assertThatThrownBy(() -> noteClient.create(note)).isInstanceOfSatisfying(ValidationException.class, ex ->
+                    assertThat(ex.getErrors()).hasSize(1).anySatisfy(validationError -> {
+                        assertThat(validationError.getPath()).isEqualTo("note:text");
+                        assertThat(validationError.getErrorCode()).isEqualTo("Size");
+                        assertThat(validationError.getMessage()).isEqualTo("size must be between 1 and 2048");
+                    }));
         }
     }
 }

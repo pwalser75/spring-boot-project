@@ -87,11 +87,11 @@ public class Note implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Note note = (Note) o;
-        return Objects.equals(id, note.id) && Objects.equals(created, note.created) && Objects.equals(lastModified, note.lastModified) && Objects.equals(text, note.text);
+        return Objects.equals(id, note.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, created, lastModified, text);
+        return Objects.hash(id);
     }
 }

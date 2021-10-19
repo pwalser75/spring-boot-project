@@ -42,7 +42,7 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public Note save(Note note) {
         NoteEntity entity = Optional.ofNullable(note.getId()).map(this::load).orElseGet(NoteEntity::new);
-        entity = update(entity, note);
+        update(entity, note);
         return convert(repository.save(entity));
     }
 
@@ -62,9 +62,6 @@ public class NoteServiceImpl implements NoteService {
     }
 
     private Note convert(NoteEntity entity) {
-        if (entity == null) {
-            return null;
-        }
         Note dto = new Note();
         dto.setId(entity.getId());
         dto.setText(entity.getText());
@@ -73,11 +70,7 @@ public class NoteServiceImpl implements NoteService {
         return dto;
     }
 
-    private NoteEntity update(NoteEntity entity, Note dto) {
-        if (dto == null) {
-            return null;
-        }
+    private void update(NoteEntity entity, Note dto) {
         entity.setText(dto.getText());
-        return entity;
     }
 }

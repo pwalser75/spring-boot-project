@@ -29,8 +29,7 @@ public class NoteTest {
     @Test
     public void testValidate() {
 
-        Note note = new Note();
-        note.setText("Hello World");
+        Note note = new Note("Hello World");
 
         // all ok
         validate(note);
@@ -77,6 +76,9 @@ public class NoteTest {
         assertThat(restored.getCreated().toInstant()).isEqualTo(note.getCreated().toInstant());
         assertThat(restored.getLastModified().toInstant()).isEqualTo(note.getLastModified().toInstant());
 
+        assertThat(restored).isEqualTo(note);
+        assertThat(restored.hashCode()).isEqualTo(note.hashCode());
+        assertThat(restored.toString()).isEqualTo(note.toString());
     }
 
     private void validate(Object obj, String... expectedErrorPropertyPaths) {
