@@ -1,6 +1,6 @@
 plugins {
     id 'java-library'
-    id 'org.springframework.boot' version '2.5.5'
+    id 'org.springframework.boot' version '2.5.6'
     id "com.github.ben-manes.versions" version "0.39.0"
 }
 
@@ -10,7 +10,7 @@ version = '1.0.0-SNAPSHOT'
 
 ext {
 
-    springBootVersion = '2.5.5'
+    springBootVersion = '2.5.6'
     h2Version = '1.4.200'
     swaggerVersion = '3.0.0'
     jacksonVersion = '2.13.0'

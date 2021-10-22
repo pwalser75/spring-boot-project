@@ -7,10 +7,12 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Path;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
+import java.time.OffsetDateTime;
 import java.util.Locale;
 import java.util.Set;
 
 import static java.time.OffsetDateTime.now;
+import static java.util.Comparator.comparing;
 import static java.util.Locale.ENGLISH;
 import static javax.validation.Validation.buildDefaultValidatorFactory;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,18 +73,17 @@ public class NoteTest {
         System.out.println(json);
 
         Note restored = json().readValue(json, Note.class);
-        assertThat(restored.getText()).isEqualTo(note.getText());
-        assertThat(restored.getId()).isEqualTo(note.getId());
-        assertThat(restored.getCreated().toInstant()).isEqualTo(note.getCreated().toInstant());
-        assertThat(restored.getLastModified().toInstant()).isEqualTo(note.getLastModified().toInstant());
 
         assertThat(restored).isEqualTo(note);
         assertThat(restored.hashCode()).isEqualTo(note.hashCode());
         assertThat(restored.toString()).isEqualTo(note.toString());
+
+        assertThat(restored).usingRecursiveComparison()
+                .withComparatorForFields(comparing(OffsetDateTime::toInstant), "created", "lastModified")
+                .isEqualTo(note);
     }
 
     private void validate(Object obj, String... expectedErrorPropertyPaths) {
-
         ValidatorFactory factory = buildDefaultValidatorFactory();
         Validator validator = factory.getValidator();
         Set<ConstraintViolation<Object>> errors = validator.validate(obj);
