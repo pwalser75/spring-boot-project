@@ -29,10 +29,13 @@ public class NoteServiceImpl implements NoteService {
     @Autowired
     private NoteRepository repository;
 
+    @Autowired
+    private NoteEntityMapper noteEntityMapper;
+
     @Override
     @Transactional(readOnly = true)
     public Note get(long id) {
-        return convert(load(id));
+        return noteEntityMapper.toDTO(load(id));
     }
 
     private NoteEntity load(long id) {
@@ -43,7 +46,7 @@ public class NoteServiceImpl implements NoteService {
     public Note save(Note note) {
         NoteEntity entity = Optional.ofNullable(note.getId()).map(this::load).orElseGet(NoteEntity::new);
         update(entity, note);
-        return convert(repository.save(entity));
+        return noteEntityMapper.toDTO(repository.save(entity));
     }
 
     @Override
@@ -51,7 +54,7 @@ public class NoteServiceImpl implements NoteService {
     public List<Note> list() {
         Spliterator<NoteEntity> spliterator = repository.findAll().spliterator();
         Stream<NoteEntity> stream = StreamSupport.stream(spliterator, false);
-        return stream.map(this::convert).collect(toList());
+        return stream.map(noteEntityMapper::toDTO).collect(toList());
     }
 
     @Override
@@ -59,15 +62,6 @@ public class NoteServiceImpl implements NoteService {
         if (repository.existsById(id)) {
             repository.deleteById(id);
         }
-    }
-
-    private Note convert(NoteEntity entity) {
-        Note dto = new Note();
-        dto.setId(entity.getId());
-        dto.setText(entity.getText());
-        dto.setCreated(entity.getCreated());
-        dto.setLastModified(entity.getLastModified());
-        return dto;
     }
 
     private void update(NoteEntity entity, Note dto) {

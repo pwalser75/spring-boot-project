@@ -57,6 +57,6 @@ app:
     d: Test
     e: [ ONE,TWO, THREE ]
     f:
-      - first
-      - second
-      - third
+    - first
+    - second
+    - third

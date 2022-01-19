@@ -1,15 +1,17 @@
 # Example Spring-Boot Project
 
-## Description
-
-Spring boot project with
+An example spring boot project with:
 
 * **API** (Service, DTO, Exception, Validation)
-* **Persistence** (Spring Data JPA & Repository, Liquibase, H2 Database)
+* **Persistence** (Spring Data JPA & Repository, H2 Database)
+* **Incremental DB Migration** with Liquibase
 * **REST** controller (CRUD)
 * **TLS enabled** and properly configured (optionally redirecting HTTP to HTTPS when enabling the HTTP port).
 * **Access Log filter**, logging all requests (method, URI, response status and execution time)
 * **Performance Logging Aspect**, logging performance tree of nested service calls
+* **Scheduled job**, logging the number of records once a minute.
+
+## REST API
 
 ![](rest-api.png)
 
@@ -50,6 +52,12 @@ in `src/main/resources/db/changelog`.
 ### Service
 
 - `NotesServiceImpl`: implementation of the notes service.
+- `NoteEntityMapper`: [Mapstruct](https://mapstruct.org/) mapper to convert the note entity into the note DTO. The
+  actual implementation is generated during annotation processing.
+
+### Job
+
+- `LogNumberOfNotesJob`: a scheduled job which logs the number of notes in the DB once a minute.
 
 ### Web
 
