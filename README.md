@@ -155,9 +155,11 @@ certificate.
 When **connecting with other clients** (browser, Postman, ...), you need to add this CA as **trusted root CA** (browser:
 certificates, add trusted root certificate). The CA certificate is located in the project root (`test_ca_001.cer`).
 
-## API Documentation (Swagger)
+## OpenAPI 3 Documentation (Springdoc)
 
-API documentation reachable at [https://localhost:8443/swagger-ui/](https://localhost:8443/swagger-ui/)
+The OpenAPI 3 schema is available at: [https://localhost:8443/v3/api-docs]()
+
+The Swagger UI is available at: [https://localhost:8443/swagger-ui/index.html]()
 
 ## Actuator Endpoints
 

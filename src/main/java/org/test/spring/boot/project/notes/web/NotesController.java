@@ -1,11 +1,12 @@
 package org.test.spring.boot.project.notes.web;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,14 +20,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.test.spring.boot.project.notes.api.Note;
 import org.test.spring.boot.project.notes.api.NoteService;
-import org.test.spring.boot.project.platform.aspect.PerformanceLogging;
 
 import javax.validation.Valid;
 import java.util.List;
-
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.NO_CONTENT;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import java.util.NoSuchElementException;
 
 /**
  * Notes web service endpoint <p>
@@ -34,27 +31,20 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @RestController
 @RequestMapping(path = "api/notes")
-@CrossOrigin(origins = "*",
-        allowedHeaders = "origin, content-type, accept, authorization",
-        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS, RequestMethod.HEAD},
-        maxAge = 1209600)
-@Api(value = "Notes resource", produces = "application/json")
-@PerformanceLogging
+@CrossOrigin(origins = "*", allowedHeaders = "origin, content-type, accept, authorization", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS, RequestMethod.HEAD}, maxAge = 1209600)
 public class NotesController {
 
     @Autowired
     private NoteService noteService;
 
     /**
-     * List notes
+     * Lists all notes
      *
      * @return list of notes (never null)
      */
-    @GetMapping(produces = APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Lists all notes", response = Note.class)
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "ok")
-    })
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Lists all notes, or find by query (fulltext search)")
+    @ApiResponse(responseCode = "200", description = "ok")
     public List<Note> list() {
         return noteService.list();
     }
@@ -65,14 +55,15 @@ public class NotesController {
      * @param id id of the record
      * @return record
      */
-    @GetMapping(path = "/{id}", produces = APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Get a specific note", response = Note.class)
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "ok"),
-            @ApiResponse(code = 404, message = "not found")
-    })
-    public Note get(@ApiParam(value = "ID of the note to fetch", required = true) @PathVariable("id") long id) {
-        return noteService.get(id);
+    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a specific note")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "ok"), @ApiResponse(responseCode = "404", description = "not found")})
+    public Note get(@Parameter(description = "ID of the note to fetch", required = true) @PathVariable("id") long id) {
+        Note result = noteService.get(id);
+        if (result != null) {
+            return result;
+        }
+        throw new NoSuchElementException();
     }
 
     /**
@@ -81,14 +72,11 @@ public class NotesController {
      * @param note record to create
      * @return created record
      */
-    @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-    @ResponseStatus(CREATED)
-    @ApiOperation(value = "Create a new note", response = Note.class)
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "ok"),
-            @ApiResponse(code = 400, message = "bad request")
-    })
-    public Note create(@RequestBody @Valid Note note) {
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new note")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "ok"), @ApiResponse(responseCode = "400", description = "bad request")})
+    public Note create(@Parameter(description = "Note to create", required = true) @RequestBody @Valid Note note) {
         note.setId(null);
         return noteService.save(note);
     }
@@ -99,15 +87,11 @@ public class NotesController {
      * @param id   id of the record to update
      * @param note new data to set
      */
-    @PutMapping(path = "/{id}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-    @ResponseStatus(NO_CONTENT)
-    @ApiOperation(value = "Update an existing note", response = Note.class)
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 400, message = "bad request"),
-            @ApiResponse(code = 404, message = "not found")
-    })
-    public void update(@ApiParam(value = "ID of the note to update", required = true) @PathVariable("id") long id, @RequestBody @Valid Note note) {
+    @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Update an existing note")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "ok"), @ApiResponse(responseCode = "400", description = "bad request"), @ApiResponse(responseCode = "404", description = "not found")})
+    public void update(@Parameter(description = "ID of the note to update", required = true) @PathVariable("id") long id, @Parameter(description = "Note data to update", required = true) @RequestBody Note note) {
         note.setId(id);
         noteService.save(note);
     }
@@ -118,9 +102,9 @@ public class NotesController {
      * @param id id of the record
      */
     @DeleteMapping(path = "/{id}")
-    @ResponseStatus(NO_CONTENT)
-    @ApiOperation(value = "Delete a note", response = Note.class)
-    public void delete(@ApiParam(value = "ID of the note to delete", required = true) @PathVariable("id") long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete a note")
+    public void delete(@Parameter(description = "ID of the note to delete", required = true) @PathVariable("id") long id) {
         noteService.delete(id);
     }
 }
